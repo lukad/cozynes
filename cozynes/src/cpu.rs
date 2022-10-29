@@ -1,6 +1,6 @@
 use log::trace;
 
-use super::{instruction::INSTRUCTIONS, mem::Mem};
+use crate::{bus::Bus, instruction::INSTRUCTIONS, mem::Mem};
 
 pub const STACK: u16 = 0x0100;
 
@@ -87,6 +87,7 @@ pub struct Cpu {
     pub memory: [u8; 0xFFFF],
     pub running: bool,
     pub cycles: usize,
+    pub bus: Bus,
 }
 
 impl std::fmt::Display for Cpu {
@@ -152,6 +153,7 @@ impl Cpu {
             memory: [0; 0xFFFF],
             running: true,
             cycles: 0,
+            bus: Bus::new(),
         };
         cpu.reset();
         cpu
