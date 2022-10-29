@@ -11,3 +11,4 @@ rand = "0.8.5"
 pretty_env_logger = "*"
 log = { version = "0.4", features = ["release_max_level_info"] }
 macroquad = "0.3.24"
+clap = { version = "4.0.18", features = ["derive", "wrap_help", "cargo"] }

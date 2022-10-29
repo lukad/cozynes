@@ -106,18 +106,24 @@ impl std::fmt::Display for Cpu {
 }
 
 impl Mem for Cpu {
+    #[inline(always)]
     fn read_byte(&self, addr: u16) -> u8 {
-        self.memory[addr as usize]
+        self.bus.read_byte(addr)
     }
 
+    #[inline(always)]
     fn write_byte(&mut self, addr: u16, value: u8) {
-        self.memory[addr as usize] = value;
+        self.bus.write_byte(addr, value);
     }
-}
 
-impl Default for Cpu {
-    fn default() -> Self {
-        Self::new()
+    #[inline(always)]
+    fn read_word(&self, addr: u16) -> u16 {
+        self.bus.read_word(addr)
+    }
+
+    #[inline(always)]
+    fn write_word(&mut self, addr: u16, value: u16) {
+        self.bus.write_word(addr, value);
     }
 }
 
@@ -142,7 +148,7 @@ pub enum BranchCondition {
 }
 
 impl Cpu {
-    pub fn new() -> Self {
+    pub fn new(bus: Bus) -> Self {
         let mut cpu = Self {
             a: 0,
             x: 0,
@@ -153,7 +159,7 @@ impl Cpu {
             memory: [0; 0xFFFF],
             running: true,
             cycles: 0,
-            bus: Bus::new(),
+            bus,
         };
         cpu.reset();
         cpu
@@ -163,26 +169,10 @@ impl Cpu {
         self.a = 0;
         self.x = 0;
         self.y = 0;
-        self.status = 0.into();
-        // self.sp = 0xFF;
         self.sp = 0xFD;
-        // self.status = 0b100100.into();
-        self.status = 0b00110000.into();
+        self.status = 0b00100100.into();
         self.pc = self.read_word(0xFFFC);
         self.cycles = 0;
-    }
-
-    pub fn load_and_run(&mut self, program: &[u8]) {
-        self.load_code(program);
-        self.reset();
-        self.run();
-    }
-
-    pub fn load_code(&mut self, program: &[u8]) {
-        // self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(program);
-        // self.write_word(0xFFFC, 0x8000);
-        self.memory[0x0600..(0x0600 + program.len())].copy_from_slice(program);
-        self.write_word(0xFFFC, 0x0600);
     }
 
     fn update_zero_and_negative(&mut self, value: u8) {
@@ -535,45 +525,5 @@ impl Cpu {
         self.status.carry = self.a & 1 == 1;
         self.a >>= 1;
         self.update_zero_and_negative(self.a);
-    }
-}
-
-#[cfg(test)]
-pub(crate) mod lib_tests {
-    use super::*;
-
-    macro_rules! load_and_run {
-        ($prog:expr) => {{
-            let mut cpu = Cpu::new();
-            cpu.load_and_run($prog);
-            cpu
-        }};
-    }
-
-    #[test]
-    fn test_nop() {
-        load_and_run!(&[0xEA, 0x00]);
-    }
-
-    #[test]
-    fn test_0xa9_lda_immidiate_load_data() {
-        let cpu = load_and_run!(&[0xa9, 0x05, 0x00]);
-        assert_eq!(cpu.a, 0x05);
-        assert!(!cpu.status.zero);
-        assert!(!cpu.status.negative);
-    }
-
-    #[test]
-    fn test_0xa9_lda_zero_flag() {
-        let cpu = load_and_run!(&[0xa9, 0x00, 0x00]);
-        assert!(cpu.status.zero);
-        assert!(!cpu.status.negative);
-    }
-
-    #[test]
-    fn test_0xa9_lda_negative_flag() {
-        let cpu = load_and_run!(&[0xa9, 0xFF, 0x00]);
-        assert!(cpu.status.negative);
-        assert!(!cpu.status.zero);
     }
 }
