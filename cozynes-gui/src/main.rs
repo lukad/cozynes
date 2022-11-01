@@ -63,7 +63,6 @@ fn handle_input(cpu: &mut Cpu) {
         cpu.write_byte(0xff, 0x64);
     }
     if is_key_pressed(KeyCode::R) {
-        cpu.memory = [0; 0xFFFF];
         cpu.reset();
         cpu.running = true;
     }
@@ -73,6 +72,8 @@ fn handle_input(cpu: &mut Cpu) {
 #[clap(author, version, about, long_about = None)]
 struct Cli {
     rom: PathBuf,
+    #[clap(long, help = "Enable tracing")]
+    trace: bool,
 }
 
 #[macroquad::main(window_conf)]
@@ -81,10 +82,12 @@ async fn main() {
 
     let cli = Cli::parse();
 
+    // let file = std::fs::read("/home/luka/code/nes/nestest.nes").unwrap();
     let file = std::fs::read(cli.rom).unwrap();
     let rom = Rom::new(&file).unwrap();
     let bus = Bus::new(rom);
     let mut cpu = Cpu::new(bus);
+    cpu.pc = 0xC000;
     cpu.running = true;
 
     rand::srand(std::time::Instant::now().elapsed().as_millis() as u64);
@@ -117,6 +120,9 @@ async fn main() {
             handle_input(&mut cpu);
             if cpu.running {
                 cpu.write_byte(0xFE, random);
+                if cli.trace {
+                    println!("{}", cozynes::trace::trace(&cpu));
+                }
                 cpu.step();
             }
         }

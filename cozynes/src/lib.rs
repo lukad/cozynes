@@ -6,3 +6,5 @@ pub mod cpu;
 pub mod instruction;
 pub mod mem;
 pub mod rom;
+
+pub mod trace;

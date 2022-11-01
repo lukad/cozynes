@@ -24,7 +24,10 @@ impl Mem for Bus {
     fn read_byte(&self, addr: u16) -> u8 {
         match addr {
             RAM..=RAM_MIRRORS_END => self.ram[(addr & 0x7FF) as usize],
-            PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => todo!("PPU not supported yet"),
+            PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => {
+                error!("PPU registers not implemented");
+                0
+            }
             0x8000..=0xFFFF => {
                 let addr = (addr - 0x8000) as usize;
                 if self.rom.prg_rom.len() == 0x4000 && addr >= 0x4000 {
@@ -43,7 +46,7 @@ impl Mem for Bus {
     fn write_byte(&mut self, addr: u16, value: u8) {
         match addr {
             RAM..=RAM_MIRRORS_END => self.ram[(addr & 0x7FF) as usize] = value,
-            PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => todo!("PPU not supported yet"),
+            PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => error!("PPU not supported yet"),
             0x8000..=0xFFFF => panic!("Attempted to write to cartridge rom address {:#06x}", addr),
             _ => debug!("Unmapped write at address {:#06x}", addr),
         }
